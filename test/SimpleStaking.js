@@ -3,17 +3,19 @@ const { ethers } = require("hardhat");
 
 describe("SimpleStaking", function () {
   let staking, token, owner, user;
-  const APR = 150; // 15%
+  const APR = 150; // 15% APR
 
   beforeEach(async () => {
     [owner, user] = await ethers.getSigners();
 
-    // Deploy test ERC20 token
-    const Token = await ethers.getContractFactory("ERC20PresetMinterPauser");
+    // Deploy OpenZeppelin mintable token
+    const Token = await ethers.getContractFactory(
+      "ERC20PresetMinterPauser"
+    );
     token = await Token.deploy("TestToken", "TTK");
     await token.waitForDeployment();
 
-    // Mint tokens to user
+    // Mint test tokens to user
     await token.mint(user.address, ethers.parseEther("1000"));
 
     // Deploy staking contract
@@ -22,39 +24,37 @@ describe("SimpleStaking", function () {
     await staking.waitForDeployment();
   });
 
-  it("Should allow staking", async () => {
+  it("Allows staking", async () => {
     const amount = ethers.parseEther("100");
 
-    // Approve and stake
     await token.connect(user).approve(await staking.getAddress(), amount);
     await staking.connect(user).stake(amount);
 
-    const stakeInfo = await staking.stakes(user.address);
-    expect(stakeInfo.amount).to.equal(amount);
+    const info = await staking.stakes(user.address);
+    expect(info.amount).to.equal(amount);
   });
 
-  it("Should accumulate rewards over time", async () => {
+  it("Accumulates rewards over time", async () => {
     const amount = ethers.parseEther("100");
 
     await token.connect(user).approve(await staking.getAddress(), amount);
     await staking.connect(user).stake(amount);
 
-    // move forward by 30 days
+    // time travel 30 days
     await ethers.provider.send("evm_increaseTime", [30 * 24 * 3600]);
     await ethers.provider.send("evm_mine");
 
     const pending = await staking.pendingRewards(user.address);
-
-    expect(pending).to.be.gt(0); // rewards > 0
+    expect(pending).to.be.gt(0);
   });
 
-  it("Should allow claiming rewards", async () => {
+  it("Allows claiming rewards", async () => {
     const amount = ethers.parseEther("100");
 
     await token.connect(user).approve(await staking.getAddress(), amount);
     await staking.connect(user).stake(amount);
 
-    // Increase time 30 days
+    // travel 30 days
     await ethers.provider.send("evm_increaseTime", [30 * 24 * 3600]);
     await ethers.provider.send("evm_mine");
 
@@ -63,29 +63,31 @@ describe("SimpleStaking", function () {
     await staking.connect(user).claim();
 
     const after = await token.balanceOf(user.address);
-    expect(after).to.be.gt(before); // user got rewards
+    expect(after).to.be.gt(before);
   });
 
-  it("Should allow unstaking", async () => {
+  it("Allows unstaking", async () => {
     const amount = ethers.parseEther("100");
 
     await token.connect(user).approve(await staking.getAddress(), amount);
     await staking.connect(user).stake(amount);
 
+    // simulate time passing
+    await ethers.provider.send("evm_increaseTime", [1]);
+    await ethers.provider.send("evm_mine");
+
     await staking.connect(user).unstake(amount);
 
-    const stakeInfo = await staking.stakes(user.address);
-
-    expect(stakeInfo.amount).to.equal(0);
+    const info = await staking.stakes(user.address);
+    expect(info.amount).to.equal(0);
   });
 
-  it("Should revert unstake if amount too high", async () => {
+  it("Reverts unstake when amount > staked", async () => {
     await expect(staking.connect(user).unstake(10)).to.be.reverted;
   });
 
   it("Only owner can set APR", async () => {
     await expect(staking.connect(user).setAPR(200)).to.be.reverted;
-    
     await expect(staking.connect(owner).setAPR(200)).not.to.be.reverted;
   });
 });

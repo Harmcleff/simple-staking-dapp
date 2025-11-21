@@ -4,12 +4,11 @@ import { ethers } from "ethers";
 import tokenABI from "./contracts/MyToken.json";
 import stakingABI from "./contracts/SimpleStaking.json";
 
-const TOKEN_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
-const STAKING_ADDRESS = "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512";
+const TOKEN_ADDRESS = "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512";
+const STAKING_ADDRESS = "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6";
 
 function App() {
   const [account, setAccount] = useState(null);
-  const [provider, setProvider] = useState(null);
 
   const [token, setToken] = useState(null);
   const [staking, setStaking] = useState(null);
@@ -17,6 +16,7 @@ function App() {
   const [balance, setBalance] = useState("0");
   const [staked, setStaked] = useState("0");
   const [amount, setAmount] = useState("");
+  const [unstakeAmount, setUnstakeAmount] = useState("");
 
   // Connect Metamask
   const connectWallet = async () => {
@@ -27,7 +27,6 @@ function App() {
     const address = await signer.getAddress();
 
     setAccount(address);
-    setProvider(provider);
 
     const tokenContract = new ethers.Contract(TOKEN_ADDRESS, tokenABI.abi, signer);
     const stakingContract = new ethers.Contract(STAKING_ADDRESS, stakingABI.abi, signer);
@@ -41,7 +40,13 @@ function App() {
     if (!token || !staking || !account) return;
 
     const bal = await token.balanceOf(account);
-    const st = await staking.stakedBalance(account);
+    
+    // Your contract stores staked balances here:
+    const stakeInfo = await staking.stakes(account);
+    const st = stakeInfo.amount; 
+
+    console.log("Wallet:", ethers.formatEther(bal));
+    console.log("Staked:", ethers.formatEther(st));
 
     setBalance(ethers.formatEther(bal));
     setStaked(ethers.formatEther(st));
@@ -68,7 +73,11 @@ function App() {
 
   // Unstake
   const unstake = async () => {
-    const tx = await staking.unstake();
+    if (!unstakeAmount) return alert("Input amount to unstake");
+
+    const value = ethers.parseEther(unstakeAmount);
+
+    const tx = await staking.unstake(value);
     await tx.wait();
 
     loadBalances();
@@ -76,7 +85,7 @@ function App() {
 
   return (
     <div style={{ padding: "40px", fontFamily: "Arial" }}>
-      <h1>Simple Staking DApp (Vite + React)</h1>
+      <h1>Simple Staking DApp</h1>
 
       {!account ? (
         <button onClick={connectWallet}>Connect Wallet</button>
@@ -85,8 +94,8 @@ function App() {
       )}
 
       <h2>Your Balances</h2>
-      <p><b>Wallet:</b> {balance} MTK</p>
-      <p><b>Staked:</b> {staked} MTK</p>
+      <p><b>Wallet:</b> {balance} CLE</p>
+      <p><b>Staked:</b> {staked} CLE</p>
 
       <hr />
 
@@ -99,6 +108,11 @@ function App() {
       <button onClick={stake}>Stake</button>
 
       <h3>Unstake</h3>
+      <input
+        type="number"
+        placeholder="Amount to Unstake"
+        onChange={(e) => setUnstakeAmount(e.target.value)}
+      />
       <button onClick={unstake}>Unstake</button>
     </div>
   );

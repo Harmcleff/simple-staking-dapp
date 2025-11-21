@@ -20,7 +20,7 @@ contract SimpleStaking is Ownable {
 
     constructor(address _token, uint256 _apr) Ownable(msg.sender) {
         stakingToken = IERC20(_token);
-        apr = _apr; // example: 150 = 15%
+        apr = _apr; 
     }
 
    
@@ -40,16 +40,15 @@ contract SimpleStaking is Ownable {
         return reward + s.rewardDebt;
     }
 
-    // -------------------------------
+
     // VIEW: EXTERNAL PENDING REWARDS
-    // -------------------------------
+
     function pendingRewards(address _user) external view returns (uint256) {
         return _pendingRewards(_user);
     }
 
-    // -------------------------------
     // STAKE
-    // -------------------------------
+    
     function stake(uint256 _amount) external {
         require(_amount > 0, "Zero amount");
 
@@ -66,9 +65,8 @@ contract SimpleStaking is Ownable {
         s.amount += _amount;
     }
 
-    // -------------------------------
     // CLAIM REWARDS
-    // -------------------------------
+
     function claim() public {
         StakeInfo storage s = stakes[msg.sender];
 
@@ -83,9 +81,9 @@ contract SimpleStaking is Ownable {
         stakingToken.transfer(msg.sender, reward);
     }
 
-    // -------------------------------
+
     // UNSTAKE
-    // -------------------------------
+
     function unstake(uint256 _amount) external {
         StakeInfo storage s = stakes[msg.sender];
         require(s.amount >= _amount, "Not enough staked");
@@ -102,6 +100,12 @@ contract SimpleStaking is Ownable {
         // Return tokens
         stakingToken.transfer(msg.sender, _amount);
     }
+
+    // GET STAKED BALANCE
+
+    function stakedBalance(address _user) external view returns (uint256) {
+    return stakes[_user].amount;
+}
 
     
     // ADMIN — UPDATE APR
