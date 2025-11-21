@@ -1,11 +1,22 @@
 {
-  "devDependencies": {
-    "hardhat": "^3.0.1"
-  },
-  "dependencies": {
-    "@nomicfoundation/hardhat-toolbox-mocha-ethers": "^3.0.0",
-    "@openzeppelin/contracts": "^5.4.0",
-    "dotenv": "^17.2.1"
-  },
-  "type": "module"
+"name": "simple-staking-fullstack",
+"version": "1.0.0",
+"private": true,
+"workspaces": ["client"],
+"scripts": {
+"test": "hardhat test",
+"compile": "hardhat compile",
+"node": "hardhat node",
+"deploy:local": "hardhat run --network localhost scripts/deploy.js",
+"start": "concurrently \"npm:node\" \"npm:client\"",
+"client": "cd client && npm run dev"
+},
+"devDependencies": {
+"@nomiclabs/hardhat-ethers": "^2.2.3",
+"chai": "^4.3.7",
+"concurrently": "^7.6.0",
+"ethereum-waffle": "^3.4.4",
+"ethers": "^5.7.2",
+"hardhat": "^2.17.0"
+}
 }
