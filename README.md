@@ -87,12 +87,6 @@ npm install @openzeppelin/contracts
 npx hardhat compile
 ```
 
-> **Note:** If you get an error for `ReentrancyGuard`, use:
-> ```solidity
-> import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-> ```
-
----
 
 ## 🚀 4. Deploying to Local Hardhat Network
 
